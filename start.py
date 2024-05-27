@@ -3,6 +3,7 @@ from moviepy.editor import VideoFileClip
 import requests
 import os
 from time import sleep
+from multiprocessing import Process
 
 # Função para logar na conta do Instagram
 def login_no_instagram(usuario, senha):
@@ -28,8 +29,8 @@ def repostar_reels(cliente, reels):
     reels_info = cliente.media_info(reels.pk)
     legenda = reels_info.caption_text
     video_url = reels_info.video_url
-    video_path = "temp_video.mp4"
-    thumbnail_path = "temp_thumbnail.jpg"
+    video_path = f"temp_video_{reels.pk}.mp4"
+    thumbnail_path = f"temp_thumbnail_{reels.pk}.jpg"
     
     # Baixar o vídeo
     baixar_midia(video_url, video_path)
@@ -55,12 +56,8 @@ def repostar_reels(cliente, reels):
         if os.path.exists(thumbnail_path):
             os.remove(thumbnail_path)
 
-# Função principal
-def principal():
-    seu_usuario = 'fernanda.treinoss'
-    sua_senha = '13579Adgjl@@'
-    usuario_alvo = 'larissa.treinos'
-
+# Função para processar a repostagem em uma conta
+def processar_conta(seu_usuario, sua_senha, usuario_alvo):
     cliente = login_no_instagram(seu_usuario, sua_senha)
     reels_list = obter_reels(cliente, usuario_alvo, quantidade=50)
 
@@ -72,6 +69,24 @@ def principal():
             print(f'Ocorreu um erro ao repostar o Reels {reels.pk}: {e}')
         
         sleep(1500)  # Espera 25 minutos (1500 segundos) antes de postar o próximo Reels
+
+# Função principal para iniciar processos
+def principal():
+    contas = [
+        {'usuario': 'usuario1', 'senha': 'senha1', 'alvo': 'usuario_alvo1'},
+        {'usuario': 'usuario2', 'senha': 'senha2', 'alvo': 'usuario_alvo2'},
+        # Adicione mais contas conforme necessário
+    ]
+
+    processos = []
+
+    for conta in contas:
+        p = Process(target=processar_conta, args=(conta['usuario'], conta['senha'], conta['alvo']))
+        p.start()
+        processos.append(p)
+
+    for p in processos:
+        p.join()
 
 if __name__ == "__main__":
     principal()
